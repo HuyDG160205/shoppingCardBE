@@ -1,6 +1,5 @@
 import { Request, Response } from 'express'
-import User from '~/models/schemas/User.schema'
-import databaseServices from '~/services/database.services'
+import usersServices from '~/services/users.services'
 // controller là handler có nhiệm vụ tập kết dữ liệu từ người dùng và
 // phân phát vào các services đúng chỗ
 
@@ -32,12 +31,8 @@ export const registercontroller = async (req: Request, res: Response) => {
   // gọi service và tạo user từ email, password trong req.body
   // lưu user đó vào users collection của mongoDB
   try {
-    const result = await databaseServices.users.insertOne(
-      new User({
-        email,
-        password
-      })
-    )
+    const result = await usersServices.register({ email, password })
+
     res.status(201).json({
       message: 'Register successfully !',
       data: result
