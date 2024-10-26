@@ -68,8 +68,53 @@ export const registerValidator = checkSchema({
         minLowercase: 1,
         minUppercase: 1,
         minNumbers: 1,
-        minSymbols: 1,
-        returnScore: true
+        minSymbols: 1
+        // returnScore: true
+      },
+      errorMessage: 'Password must be Strong'
+    }
+  },
+
+  confirm_password: {
+    notEmpty: {
+      errorMessage: 'confirm_password is required'
+    },
+    isString: {
+      errorMessage: 'confirm_password must be a string'
+    },
+    isLength: {
+      options: {
+        min: 8,
+        max: 50
+      }
+    },
+    isStrongPassword: {
+      options: {
+        minLength: 1,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 1
+        // returnScore: true
+      },
+      errorMessage: 'confirm_password must be Strong'
+    },
+    custom: {
+      options: (value, { req }) => {
+        // value: confirm_password
+        if (value !== req.body.password) {
+          throw new Error("confirm_password doesn't match passwotf")
+        } else {
+          return true
+        }
+      }
+    }
+  },
+  date_of_birth: {
+    isISO8601: {
+      options: {
+        strict: true,
+        strictSeparator: true
       }
     }
   }
