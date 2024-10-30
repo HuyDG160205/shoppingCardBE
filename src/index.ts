@@ -16,6 +16,9 @@ app.use(express.json()) //server dùng middleware biến đổi các chuỗi jso
 app.use('/users', userRouter)
 // http://localhost:3000/users/get-me/
 // cho server mở port ở 3000
+app.use((error, req, res, next) => {
+  res.status(error.status).json(error)
+})
 app.listen(PORT, () => {
   console.log('Server BE đang chạy trên port ' + PORT)
 })

@@ -1,7 +1,9 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import { RegisterReqBody } from '~/models/requests/users.requests'
 import usersServices from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
+import { ErrorWithStatus } from '~/models/Errors'
+import HTTP_STATUS from '~/constants/httpStatus'
 // controller là handler có nhiệm vụ tập kết dữ liệu từ người dùng và
 // phân phát vào các services đúng chỗ
 
@@ -28,33 +30,28 @@ export const loginController = (req: Request, res: Response) => {
   }
 }
 
-export const registercontroller = async (req: Request<ParamsDictionary, any, RegisterReqBody>, res: Response) => {
+export const registercontroller = async (
+  req: Request<ParamsDictionary, any, RegisterReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
   const { email } = req.body
   // gọi service và tạo user từ email, password trong req.body
   // lưu user đó vào users collection của mongoDB
-  try {
-    // kiểm tra email có bị trùng chưa | email có tồn tại chưa | email có ai dùng chưa
-    const isDup = await usersServices.checkEmailExist(email)
 
-    if (isDup) {
-      const customError = new Error('Email has been used')
-      Object.defineProperty(customError, 'message', {
-        enumerable: true
-        //* cái này mấy thk senior có khi còn k code dc
-      })
+  // kiểm tra email có bị trùng chưa | email có tồn tại chưa | email có ai dùng chưa
+  const isDup = await usersServices.checkEmailExist(email)
 
-      throw customError
-    }
-    const result = await usersServices.register(req.body)
-
-    res.status(201).json({
-      message: 'Register successfully !',
-      data: result
-    })
-  } catch (error) {
-    res.status(422).json({
-      message: 'Register failed !!!',
-      error
+  if (isDup) {
+    throw new ErrorWithStatus({
+      status: HTTP_STATUS.UNPROCESSABLE_ENTITY,
+      message: 'Email already been used!'
     })
   }
+  const result = await usersServices.register(req.body)
+
+  res.status(201).json({
+    message: 'Register successfully !',
+    data: result
+  })
 }
