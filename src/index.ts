@@ -6,6 +6,7 @@
 import express from 'express'
 import userRouter from './routes/users.routers'
 import databaseServices from './services/database.services'
+import { defaultErrorHandler } from './middlewares/error.middlewares'
 
 const app = express()
 const PORT = 3000
@@ -16,9 +17,7 @@ app.use(express.json()) //server dùng middleware biến đổi các chuỗi jso
 app.use('/users', userRouter)
 // http://localhost:3000/users/get-me/
 // cho server mở port ở 3000
-app.use((error, req, res, next) => {
-  res.status(error.status).json(error)
-})
+app.use(defaultErrorHandler)
 app.listen(PORT, () => {
   console.log('Server BE đang chạy trên port ' + PORT)
 })
