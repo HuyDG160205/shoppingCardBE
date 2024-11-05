@@ -17,12 +17,14 @@ class UsersServices {
   private signAccessToken(user_id: string) {
     return signToken({
       payload: { user_id, token_type: TOKEN_TYPE.AccessToken },
+      privateKey: process.env.JWT_SECRET_ACCESS_TOKEN as string,
       options: { expiresIn: process.env.ACCESS_TOKEN_EXPIRE_IN }
     })
   }
   private signRefreshToken(user_id: string) {
     return signToken({
       payload: { user_id, token_type: TOKEN_TYPE.RefreshToken },
+      privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string,
       options: { expiresIn: process.env.REFRESH_TOKEN_EXPIRE_IN }
     })
   }
@@ -31,6 +33,21 @@ class UsersServices {
     // dùng email lên database tìm user sở hữu email đó
     const user = await databaseServices.users.findOne({ email })
     return Boolean(user)
+  }
+
+  async checkRefreshToken({ user_id, refresh_token }: { user_id: string; refresh_token: string }) {
+    const refreshToken = await databaseServices.refresh_tokens.findOne({
+      user_id: new ObjectId(user_id),
+      token: refresh_token
+    })
+    if (!refreshToken) {
+      throw new ErrorWithStatus({
+        status: HTTP_STATUS.UNAUTHORIZED,
+        message: USERS_MESSAGES.REFRESH_TOKEN_IS_INVALID
+      })
+    }
+
+    return refreshToken
   }
 
   async register(payload: RegisterReqBody) {
@@ -84,6 +101,10 @@ class UsersServices {
     )
 
     return { access_token, refresh_token }
+  }
+
+  async logout(refresh_token: string) {
+    await databaseServices.refresh_tokens.deleteOne({ token: refresh_token })
   }
 }
 

@@ -8,6 +8,9 @@ import { USERS_MESSAGES } from '~/constants/messages'
 import { ErrorWithStatus } from '~/models/Errors'
 import { verifyToken } from '~/utils/jwt'
 import { validate } from '~/utils/validate'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 // middleware là handler có nhiệm vụ kiểm tra các dữ liệu mà ng dùng
 //  gửi lên thông qua request
@@ -184,13 +187,16 @@ export const accessTokenValidator = validate(
 
             try {
               //nếu c1o mã thì mình sẽ verify(xác thực chữ ký)
-              const decode_authorization = await verifyToken({ token: access_token })
+              const decode_authorization = await verifyToken({
+                token: access_token,
+                privateKey: process.env.JWT_SECRET_ACCESS_TOKEN as string
+              })
               //decode_authorization là paylaod của access_token đã mã hóa
               // bên trong đó có user_id và token_type ...
-              req.decode_authorization = decode_authorization
+              ;(req as Request).decode_authorization = decode_authorization
             } catch (error) {
               throw new ErrorWithStatus({
-                status: HTTP_STATUS.UNAUTHORIZED, //301
+                status: HTTP_STATUS.UNAUTHORIZED, //401
                 message: capitalize((error as JsonWebTokenError).message)
               })
             }
@@ -202,5 +208,37 @@ export const accessTokenValidator = validate(
       }
     },
     ['headers']
+  )
+)
+
+// viết hàm kiểm tra refresh_token
+
+export const refreshTokenValidator = validate(
+  checkSchema(
+    {
+      refresh_token: {
+        // vô là keim63 tra luôn
+        notEmpty: {
+          errorMessage: USERS_MESSAGES.REFRESH_TOKEN_IS_REQUIRED
+        },
+        custom: {
+          options: async (value, { req }) => {
+            try {
+              const decode_refresh_token = await verifyToken({
+                token: value,
+                privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string
+              })
+              ;(req as Request).decode_refresh_token = decode_refresh_token
+            } catch (error) {
+              throw new ErrorWithStatus({
+                status: HTTP_STATUS.UNAUTHORIZED, //301
+                message: capitalize((error as JsonWebTokenError).message)
+              })
+            }
+          }
+        }
+      }
+    },
+    ['body']
   )
 )

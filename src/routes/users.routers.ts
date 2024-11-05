@@ -1,6 +1,11 @@
 import express from 'express'
-import { loginController, registercontroller } from '~/controllers/users.controllers'
-import { accessTokenValidator, loginValidator, registerValidator } from '~/middlewares/users.middlewares'
+import { loginController, logoutController, registercontroller } from '~/controllers/users.controllers'
+import {
+  accessTokenValidator,
+  loginValidator,
+  refreshTokenValidator,
+  registerValidator
+} from '~/middlewares/users.middlewares'
 import { wrapAsync } from '~/utils/handlers'
 
 //tạo userRoute
@@ -49,8 +54,8 @@ userRouter.post('/login', loginValidator, wrapAsync(loginController))
     }
 
 */
-userRouter.post('/logout', accessTokenValidator, (req, res) => {
-  res.json('success')
-})
+userRouter.post('/logout', accessTokenValidator, refreshTokenValidator, wrapAsync(logoutController))
+
+// userRouter.post("/me")
 
 export default userRouter
