@@ -242,3 +242,38 @@ export const refreshTokenValidator = validate(
     ['body']
   )
 )
+
+export const emailVerifyTokenValidator = validate(
+  checkSchema(
+    {
+      email_verify_token: {
+        trim: true,
+        notEmpty: {
+          errorMessage: USERS_MESSAGES.EMAIL_VERIFY_TOKEN_IS_REQUIRED
+        },
+        custom: {
+          options: async (value, { req }) => {
+            //value là email_verify_token luôn, k cần tìm, kiểm tra luôn
+            try {
+              const decode_email_verify_token = await verifyToken({
+                token: value, //value là email_verify_token
+                privateKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string
+              })
+              //nếu mã hóa thành công thì lưu vào req dùng ở các chổ khác
+              ;(req as Request).decode_email_verify_token = decode_email_verify_token
+            } catch (error) {
+              throw new ErrorWithStatus({
+                status: HTTP_STATUS.UNAUTHORIZED, //401
+                message: (error as JsonWebTokenError).message
+              })
+            }
+            //
+
+            return true // xác thực thành ng
+          }
+        }
+      }
+    },
+    ['query']
+  )
+)

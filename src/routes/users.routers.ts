@@ -1,7 +1,13 @@
 import express from 'express'
-import { loginController, logoutController, registercontroller } from '~/controllers/users.controllers'
+import {
+  loginController,
+  logoutController,
+  registercontroller,
+  verifyEmailTokenController
+} from '~/controllers/users.controllers'
 import {
   accessTokenValidator,
+  emailVerifyTokenValidator,
   loginValidator,
   refreshTokenValidator,
   registerValidator
@@ -57,5 +63,19 @@ userRouter.post('/login', loginValidator, wrapAsync(loginController))
 userRouter.post('/logout', accessTokenValidator, refreshTokenValidator, wrapAsync(logoutController))
 
 // userRouter.post("/me")
+
+/**
+    desc: verify email
+khi người dùng nhấn vào link có trong email của họ
+thì evt sẽ dc gửi lên server backend thông qua req.query
+path: users/verify-email/?email_verify_token=string
+method: get
+ */
+
+userRouter.get(
+  '/verify-email', //
+  emailVerifyTokenValidator,
+  wrapAsync(verifyEmailTokenController)
+)
 
 export default userRouter

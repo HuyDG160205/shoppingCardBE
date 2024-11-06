@@ -2,6 +2,7 @@
 
 import { JwtPayload } from 'jsonwebtoken'
 import { TOKEN_TYPE } from '~/constants/enums'
+import { ParsedQs } from 'qs'
 
 export interface RegisterReqBody {
   name: string
@@ -23,4 +24,8 @@ export interface TokenPayLoad extends JwtPayload {
 
 export interface LogoutReqBody {
   refresh_token: string
+}
+
+export interface VerifyEmailReqQuery extends ParsedQs {
+  email_verify_token: string
 }

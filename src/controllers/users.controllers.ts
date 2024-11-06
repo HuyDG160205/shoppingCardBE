@@ -1,11 +1,18 @@
 import { NextFunction, Request, Response } from 'express'
-import { loginReqBody, LogoutReqBody, RegisterReqBody, TokenPayLoad } from '~/models/requests/users.requests'
+import {
+  loginReqBody,
+  LogoutReqBody,
+  RegisterReqBody,
+  TokenPayLoad,
+  VerifyEmailReqQuery
+} from '~/models/requests/users.requests'
 import usersServices from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { ErrorWithStatus } from '~/models/Errors'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { USERS_MESSAGES } from '~/constants/messages'
-import { Result } from 'express-validator'
+import { UserVerifyStatus } from '~/constants/enums'
+import { verify } from 'crypto'
 
 export const registercontroller = async (
   req: Request<ParamsDictionary, any, RegisterReqBody>,
@@ -79,4 +86,36 @@ export const logoutController = async (
   res.status(HTTP_STATUS.OK).json({
     message: USERS_MESSAGES.LOGOUT_SUCCESS
   })
+}
+
+export const verifyEmailTokenController = async (
+  req: Request<ParamsDictionary, any, any, VerifyEmailReqQuery>,
+  res: Response,
+  next: NextFunction
+) => {
+  //khi họ bấm vào link, thì họ sẽ gửi email_verify_token lên thông qua
+  //req.query
+  const { email_verify_token } = req.query
+  const { user_id } = req.decode_email_verify_token as TokenPayLoad
+
+  //kiểm tra xem trong database có user nào sở hữu là user_id trong payload
+  //email_verify_token
+  const user = await usersServices.checkEmailVerifyToken({ user_id, email_verify_token })
+  //kiểm tra xem user tìm dc bị banned chưa, chưa thì mới verify
+  if (user.verify == UserVerifyStatus.Banned) {
+    throw new ErrorWithStatus({
+      status: HTTP_STATUS.UNAUTHORIZED, //401
+      message: USERS_MESSAGES.EMAIL_HAS_BEEN_BANNED
+    })
+  } else {
+    // chưa verify thì mình verify
+    const result = await usersServices.verifyEmail(user_id)
+
+    res.status(HTTP_STATUS.OK).json({
+      message: USERS_MESSAGES.VERIFY_EMAIL_SUCCESS,
+      result
+    })
+
+    // sau khi verify xong thì
+  }
 }
