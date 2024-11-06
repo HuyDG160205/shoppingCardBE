@@ -12,7 +12,6 @@ import { ErrorWithStatus } from '~/models/Errors'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { USERS_MESSAGES } from '~/constants/messages'
 import { UserVerifyStatus } from '~/constants/enums'
-import { verify } from 'crypto'
 
 export const registercontroller = async (
   req: Request<ParamsDictionary, any, RegisterReqBody>,
@@ -152,6 +151,26 @@ export const resendVerifyEmailController = async (
     await usersServices.sendEmailVerify(user_id)
     res.status(HTTP_STATUS.OK).json({
       message: USERS_MESSAGES.RESEND_EMAIL_VERIFY_TOKEN_SUCCESS
+    })
+  }
+}
+
+export const forgotPasswordController = async (
+  req: Request<ParamsDictionary, any, any>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { email } = req.body
+  const hasUser = await usersServices.checkEmailExist(email)
+  if (!hasUser) {
+    throw new ErrorWithStatus({
+      status: HTTP_STATUS.NOT_FOUND,
+      message: USERS_MESSAGES.USER_NOT_FOUND
+    })
+  } else {
+    await usersServices.forgotPassword(email)
+    res.status(HTTP_STATUS.OK).json({
+      message: USERS_MESSAGES.CHECK_EMAIL_TO_RESET_PASSWORD
     })
   }
 }

@@ -97,6 +97,10 @@ class UsersServices {
     })
   }
 
+  async findUserByEmail(email: string) {
+    return await databaseServices.users.findOne({ email })
+  }
+
   async register(payload: RegisterReqBody) {
     const user_id = new ObjectId()
     const email_verify_token = await this.signEmailVerifyToken(user_id.toString())
@@ -210,6 +214,28 @@ class UsersServices {
         http://localhost:3000/users/verify-email/?email_verify_token=${email_verify_token}
       
       `)
+  }
+
+  async forgotPassword(email: string) {
+    const user = await databaseServices.users.findOne({ email })
+    if (user) {
+      const user_id = user._id
+      const forgot_password_token = await this.signForgotPasswordToken(user_id.toString())
+      await databaseServices.users.updateOne({ _id: user_id }, [
+        {
+          $set: {
+            forgot_password_token,
+            updated_at: '$$NOW'
+          }
+        }
+      ])
+      //gửi mail
+      console.log(`
+        Bấm vô đây để đổi mật khẩu:
+          http://localhost:8000/reset-password/?forgot_password_token
+        
+        `)
+    }
   }
 }
 

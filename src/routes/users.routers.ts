@@ -1,5 +1,6 @@
 import express from 'express'
 import {
+  forgotPasswordController,
   loginController,
   logoutController,
   registercontroller,
@@ -9,6 +10,7 @@ import {
 import {
   accessTokenValidator,
   emailVerifyTokenValidator,
+  forgotPasswordValidator,
   loginValidator,
   refreshTokenValidator,
   registerValidator
@@ -98,9 +100,16 @@ userRouter.post(
 /*
     desc: forgot password
     khi quên mật khẩu thì dùng chức năng này
-    path: users/
-
-
+    path: users/forgot-password
+    method: post
+    body: {
+        email: string
+    }
 */
+userRouter.post(
+  '/forgot-password',
+  forgotPasswordValidator, //
+  wrapAsync(forgotPasswordController)
+)
 
 export default userRouter
