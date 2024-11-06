@@ -91,6 +91,12 @@ class UsersServices {
     return user
   }
 
+  async findUserById(user_id: string) {
+    return await databaseServices.users.findOne({
+      _id: new ObjectId(user_id)
+    })
+  }
+
   async register(payload: RegisterReqBody) {
     const user_id = new ObjectId()
     const email_verify_token = await this.signEmailVerifyToken(user_id.toString())
@@ -184,6 +190,26 @@ class UsersServices {
     )
 
     return { access_token, refresh_token }
+  }
+
+  async sendEmailVerify(user_id: string) {
+    //ký
+    const email_verify_token = await this.signEmailVerifyToken(user_id)
+    //lưu | update
+    await databaseServices.users.updateOne({ _id: new ObjectId(user_id) }, [
+      {
+        $set: {
+          email_verify_token,
+          updated_at: '$$NOW'
+        }
+      }
+    ])
+    //gửi
+    console.log(`
+      Nội dung Email xác thực Email gồm:
+        http://localhost:3000/users/verify-email/?email_verify_token=${email_verify_token}
+      
+      `)
   }
 }
 

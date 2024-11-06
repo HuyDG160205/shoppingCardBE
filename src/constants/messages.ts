@@ -33,7 +33,7 @@ export const USERS_MESSAGES = {
   REFRESH_TOKEN_IS_INVALID: 'Refresh token is invalid',
   EMAIL_VERIFY_TOKEN_IS_REQUIRED: 'Email verify token is required',
   EMAIL_VERIFY_TOKEN_IS_INVALID: 'Email verify token is invalid',
-  VERIFY_EMAIL_SUCCESS: 'Verify email is successfully',
+  VERIFY_EMAIL_SUCCESS: 'Verify email is successful',
   EMAIL_HAS_BEEN_VERIFIED: 'Email has been verified',
   EMAIL_HAS_BEEN_BANNED: 'Email has been banned',
   FORGOT_PASSWORD_TOKEN_IS_REQUIRED: 'Forgot password token is required',

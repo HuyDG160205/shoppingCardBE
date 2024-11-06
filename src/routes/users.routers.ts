@@ -3,6 +3,7 @@ import {
   loginController,
   logoutController,
   registercontroller,
+  resendVerifyEmailController,
   verifyEmailTokenController
 } from '~/controllers/users.controllers'
 import {
@@ -77,5 +78,29 @@ userRouter.get(
   emailVerifyTokenValidator,
   wrapAsync(verifyEmailTokenController)
 )
+
+/*
+    desc: resend email verify token
+    người dùng sẽ dùng chức năng này khi làm mất, lạc email
+    phải đăng nhập thì mới cho verify
+    header: {
+        authorization: 'Bearer <access_token>'
+    }
+    method: post
+*/
+
+userRouter.post(
+  '/resend-verify-email',
+  accessTokenValidator, //
+  wrapAsync(resendVerifyEmailController)
+)
+
+/*
+    desc: forgot password
+    khi quên mật khẩu thì dùng chức năng này
+    path: users/
+
+
+*/
 
 export default userRouter

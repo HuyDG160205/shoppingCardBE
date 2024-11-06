@@ -119,3 +119,39 @@ export const verifyEmailTokenController = async (
     // sau khi verify xong thì
   }
 }
+
+export const resendVerifyEmailController = async (
+  req: Request<ParamsDictionary, any, any>,
+  res: Response,
+  next: NextFunction
+) => {
+  //dùng user_id tìm user đó
+  const { user_id } = req.decode_authorization as TokenPayLoad
+
+  //kiểm tra user đó có verify hay bị banned không ?
+  const user = await usersServices.findUserById(user_id)
+  // nếu k thì mới resendEmailVerify
+  if (!user)
+    throw new ErrorWithStatus({
+      status: HTTP_STATUS.NOT_FOUND,
+      message: USERS_MESSAGES.USER_NOT_FOUND
+    })
+
+  if (user.verify == UserVerifyStatus.Verified) {
+    throw new ErrorWithStatus({
+      status: HTTP_STATUS.OK,
+      message: USERS_MESSAGES.EMAIL_HAS_BEEN_VERIFIED
+    })
+  } else if (user.verify == UserVerifyStatus.Banned) {
+    throw new ErrorWithStatus({
+      status: HTTP_STATUS.OK,
+      message: USERS_MESSAGES.EMAIL_HAS_BEEN_BANNED
+    })
+  } else {
+    // chưa verify thì resend
+    await usersServices.sendEmailVerify(user_id)
+    res.status(HTTP_STATUS.OK).json({
+      message: USERS_MESSAGES.RESEND_EMAIL_VERIFY_TOKEN_SUCCESS
+    })
+  }
+}
