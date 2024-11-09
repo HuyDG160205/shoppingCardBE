@@ -1,19 +1,26 @@
 import express from 'express'
 import {
   forgotPasswordController,
+  getMeController,
   loginController,
   logoutController,
   registercontroller,
   resendVerifyEmailController,
-  verifyEmailTokenController
+  resetPasswordController,
+  updateMeController,
+  verifyEmailTokenController,
+  verifyForgotPasswordTokenController
 } from '~/controllers/users.controllers'
 import {
   accessTokenValidator,
   emailVerifyTokenValidator,
+  forgotPasswordTokenValidator,
   forgotPasswordValidator,
   loginValidator,
   refreshTokenValidator,
-  registerValidator
+  registerValidator,
+  resetPasswordValidator,
+  updateMeValidator
 } from '~/middlewares/users.middlewares'
 import { wrapAsync } from '~/utils/handlers'
 
@@ -110,6 +117,77 @@ userRouter.post(
   '/forgot-password',
   forgotPasswordValidator, //
   wrapAsync(forgotPasswordController)
+)
+
+/*
+    desc: verify forgot password token
+    kiểm tra mã forgot passwrod còn hiệu lực không
+    path: users/verify-forgot-password
+    method: post
+    body: {
+      forgot-password-token: string
+    }
+*/
+userRouter.post(
+  '/verify-forgot-password',
+  forgotPasswordTokenValidator, //kiểm tra forgot password token
+  wrapAsync(verifyForgotPasswordTokenController) //xử lý logic verify
+)
+
+/*
+  desc: reset password
+  path: users/reset-password
+  method: post
+  body: {
+    password: string,
+    confirm_password: string,
+    forgot_password_token:string 
+  }
+*/
+
+userRouter.post(
+  '/reset-password',
+  forgotPasswordTokenValidator,
+  resetPasswordValidator, //kiểm tra password, confirm_password, forgot_password_token
+  wrapAsync(resetPasswordController) //xử lý logic
+)
+
+/*
+  desc: get me
+  lấy thông tin của chính mình
+  path: user/me
+  method: post
+  header: {
+    Authorization: 'bearer <access_token>'
+  }
+*/
+userRouter.post(
+  '/me',
+  accessTokenValidator, //
+  wrapAsync(getMeController)
+)
+
+/*
+  des: update profile của user
+  path: '/me'
+  method: patch
+  Header: {Authorization: Bearer <access_token>}
+  body: {
+    name?: string
+    date_of_birth?: Date
+    bio?: string // optional
+    location?: string // optional
+    website?: string // optional
+    username?: string // optional
+    avatar?: string // optional
+    cover_photo?: string // optional}
+  */
+
+userRouter.patch(
+  '/me',
+  accessTokenValidator,
+  updateMeValidator, //
+  wrapAsync(updateMeController)
 )
 
 export default userRouter

@@ -29,3 +29,24 @@ export interface LogoutReqBody {
 export interface VerifyEmailReqQuery extends ParsedQs {
   email_verify_token: string
 }
+
+export interface VerifyForgotPasswordTokenReqBody {
+  forgot_password_token: string
+}
+
+export interface ResetPasswordReqBody {
+  forgot_password_token: string
+  password: string
+  confirm_password: string
+}
+
+export interface UpdateMeReqBody {
+  name?: string
+  date_of_birth?: string
+  bio?: string
+  location?: string
+  website?: string
+  username?: string
+  avatar?: string
+  cover_photo?: string
+}

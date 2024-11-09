@@ -1,6 +1,6 @@
 import User from '~/models/schemas/User.schema'
 import databaseServices from './database.services'
-import { loginReqBody, RegisterReqBody } from '~/models/requests/users.requests'
+import { loginReqBody, RegisterReqBody, UpdateMeReqBody } from '~/models/requests/users.requests'
 import { hashPassword } from '~/utils/crypto'
 import { signToken } from '~/utils/jwt'
 import { TOKEN_TYPE, UserVerifyStatus } from '~/constants/enums'
@@ -88,6 +88,44 @@ class UsersServices {
       })
     }
 
+    return user
+  }
+
+  async checkForgotPasswordToken({
+    user_id,
+    forgot_password_token
+  }: {
+    user_id: string //
+    forgot_password_token: string
+  }) {
+    const user = databaseServices.users.findOne({
+      _id: new ObjectId(user_id),
+      forgot_password_token
+    })
+    //nếu với 2 thông tin
+    if (!user) {
+      throw new ErrorWithStatus({
+        status: HTTP_STATUS.UNAUTHORIZED,
+        message: USERS_MESSAGES.FORGOT_PASSWORD_TOKEN_IS_INVALID
+      })
+    }
+    // nếu có thì trả ra user cho ai cần dùng
+    return user
+  }
+
+  async checkEmailVerifed(user_id: string) {
+    const user = await databaseServices.users.findOne({
+      _id: new ObjectId(user_id),
+      verify: UserVerifyStatus.Verified
+    })
+    // nếu k có thằng user nào là user_id và đang verify thì
+    if (!user) {
+      throw new ErrorWithStatus({
+        status: HTTP_STATUS.FORBIDDEN, //403
+        message: USERS_MESSAGES.USER_NOT_VERIFIED
+      })
+    }
+    // ném ra user đó
     return user
   }
 
@@ -232,10 +270,77 @@ class UsersServices {
       //gửi mail
       console.log(`
         Bấm vô đây để đổi mật khẩu:
-          http://localhost:8000/reset-password/?forgot_password_token
+          http://localhost:8000/reset-password/?forgot_password_token=${forgot_password_token}
         
         `)
     }
+  }
+
+  async resetPassword({ user_id, password }: { user_id: string; password: string }) {
+    await databaseServices.users.updateOne({ _id: new ObjectId(user_id) }, [
+      {
+        $set: {
+          password: hashPassword(password),
+          forgot_password_token: '',
+          updated_at: '$$NOW'
+        }
+      }
+    ])
+  }
+
+  async getMe(user_id: string) {
+    const userInfor = await databaseServices.users.findOne(
+      { _id: new ObjectId(user_id) },
+      {
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        }
+      }
+    )
+    return userInfor //ném ra ngoài
+  }
+
+  async updateMe({ user_id, payload }: { user_id: string; payload: UpdateMeReqBody }) {
+    // payload này là những gì mà người dùng muốn update
+    // nhưng trong payload này có 2 vấn đề
+    // 1. nếu người dùng update dateOfBirth là string cần chuyền về date
+    const _payload = payload.date_of_birth
+      ? { ...payload, date_of_birth: new Date(payload.date_of_birth) } //
+      : payload
+    // 2. nếu người dùng update username thì nó nên là unique
+    if (_payload.username) {
+      const user = await databaseServices.users.findOne({ username: payload.username })
+      if (user) {
+        // nếu tìm dc là bị trùng username
+        throw new ErrorWithStatus({
+          status: HTTP_STATUS.UNPROCESSABLE_ENTITY,
+          message: USERS_MESSAGES.USERNAME_ALREADY_EXISTS
+        })
+      }
+    }
+    // vượt qua hết thì tiến hành cập nhập
+    const userInfor = await databaseServices.users.findOneAndUpdate(
+      { _id: new ObjectId(user_id) },
+      [
+        {
+          $set: {
+            ..._payload,
+            updated_at: '$$NOW'
+          }
+        }
+      ],
+      {
+        returnDocument: 'after',
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password: 0
+        }
+      }
+    )
+    return userInfor
   }
 }
 

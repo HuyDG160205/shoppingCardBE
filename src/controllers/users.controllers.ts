@@ -3,8 +3,10 @@ import {
   loginReqBody,
   LogoutReqBody,
   RegisterReqBody,
+  ResetPasswordReqBody,
   TokenPayLoad,
-  VerifyEmailReqQuery
+  VerifyEmailReqQuery,
+  VerifyForgotPasswordTokenReqBody
 } from '~/models/requests/users.requests'
 import usersServices from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
@@ -173,4 +175,78 @@ export const forgotPasswordController = async (
       message: USERS_MESSAGES.CHECK_EMAIL_TO_RESET_PASSWORD
     })
   }
+}
+
+export const verifyForgotPasswordTokenController = async (
+  req: Request<ParamsDictionary, any, VerifyForgotPasswordTokenReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  // vào được đây có nghĩa là forgot_password_token trong body là hợp lệ
+  const { forgot_password_token } = req.body
+  // lấy thêm user_id để tìm xem user có sở hữu forgot_password này không
+  const { user_id } = req.decode_forgot_password_token as TokenPayLoad
+  // kiểm tra xem forgot_password_token còn trong database này không?
+  await usersServices.checkForgotPasswordToken({ user_id, forgot_password_token })
+  // nếu qua hàm trên êm xui thì nghĩa là token hợp lệ
+  res.status(HTTP_STATUS.OK).json({
+    message: USERS_MESSAGES.VERIFY_FORGOT_PASSWORD_TOKEN_SUCCESS
+  })
+}
+
+export const resetPasswordController = async (
+  req: Request<ParamsDictionary, any, ResetPasswordReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  // vào được đây có nghĩa là forgot_password_token trong body là hợp lệ
+  const { forgot_password_token, password } = req.body
+  // lấy thêm user_id để tìm xem user có sở hữu forgot_password này không
+  const { user_id } = req.decode_forgot_password_token as TokenPayLoad
+  // kiểm tra xem forgot_password_token còn trong database này không?
+  await usersServices.checkForgotPasswordToken({ user_id, forgot_password_token })
+  // nếu qua hàm trên êm xui thì nghĩa là token hợp lệ thì mình reset
+  await usersServices.resetPassword({ user_id, password })
+
+  res.status(HTTP_STATUS.OK).json({
+    message: USERS_MESSAGES.RESET_PASSWORD_SUCCESS
+  })
+}
+
+export const getMeController = async (
+  req: Request<ParamsDictionary, any, any>,
+  res: Response, //
+  next: NextFunction
+) => {
+  const { user_id } = req.decode_authorization as TokenPayLoad
+  // với user_id này tìm dc thông tin user đó
+  // nhưng mình k nên đưa hết thông tin cho ngta
+  const userInfor = await usersServices.getMe(user_id)
+
+  res.status(HTTP_STATUS.OK).json({
+    message: USERS_MESSAGES.GET_ME_SUCCESS,
+    userInfor
+  })
+}
+
+export const updateMeController = async (
+  req: Request<ParamsDictionary, any, any>,
+  res: Response, //
+  next: NextFunction
+) => {
+  // người ta gửi access lên để chứng minh là họ đã đăng nhập
+  // đồng thời cũng cho mình biết họ là ai thông qua user_id từ payload
+  const { user_id } = req.decode_authorization as TokenPayLoad
+  //req.body chứa các thuộc tính mà người dùng muốn cập nhập
+  const payload = req.body // payload là nhưng gì người dùng gửi lên
+  //ta muốn account phải verify thì mới được cập nhật thông tin
+  await usersServices.checkEmailVerifed(user_id)
+  // nếu gọi hàm trên mà k có gì xảy ra thì nghĩa là user đã verify r
+  // mình tiến hành cập nhật thông tin mà người dùng cung cấp
+  const userInfor = await usersServices.updateMe({ user_id, payload })
+
+  res.status(HTTP_STATUS.OK).json({
+    message: USERS_MESSAGES.UPDATE_PROFILE_SUCCESS,
+    userInfor
+  })
 }
