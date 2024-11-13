@@ -7,15 +7,18 @@ import express from 'express'
 import userRouter from './routes/users.routers'
 import databaseServices from './services/database.services'
 import { defaultErrorHandler } from './middlewares/error.middlewares'
+import mediaRouter from './routes/medias.routers'
+import { initFolder } from './utils/file'
 
 const app = express()
 const PORT = 3000
 databaseServices.connect().catch(console.dir) //kết nối với mongodb
-
+initFolder()
 app.use(express.json()) //server dùng middleware biến đổi các chuỗi json được gửi lên trên
 // cho server kết nối userRouter
 app.use('/users', userRouter)
 // http://localhost:3000/users/get-me/
+app.use('/medias', mediaRouter)
 // cho server mở port ở 3000
 app.use(defaultErrorHandler)
 app.listen(PORT, () => {
