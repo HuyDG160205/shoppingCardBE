@@ -443,3 +443,14 @@ export const updateMeValidator = validate(
     ['body']
   )
 )
+
+export const changePasswordValidator = validate(
+  checkSchema(
+    {
+      old_password: passwordSchema,
+      password: passwordSchema,
+      confirm_password: confirmPasswordSchema
+    },
+    ['headers', 'body']
+  )
+)

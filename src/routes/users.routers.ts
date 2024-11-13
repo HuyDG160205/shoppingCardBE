@@ -1,5 +1,6 @@
 import express from 'express'
 import {
+  changePasswordController,
   forgotPasswordController,
   getMeController,
   loginController,
@@ -14,6 +15,7 @@ import {
 import { filterMiddleware } from '~/middlewares/common.middlewares'
 import {
   accessTokenValidator,
+  changePasswordValidator,
   emailVerifyTokenValidator,
   forgotPasswordTokenValidator,
   forgotPasswordValidator,
@@ -203,4 +205,31 @@ userRouter.patch(
   wrapAsync(updateMeController)
 )
 
+/**
+  desc: change-password
+  đổi mật khổi
+  path: /users/change-password
+  method: put
+  header: {
+    Authorization: 'Bearer <access_token>'
+  }
+  body: {
+    old_password: string,
+    password: string,
+    confirm_password: string
+  }
+
+ */
+
+userRouter.put(
+  '/change-password',
+  accessTokenValidator, //
+  changePasswordValidator,
+  wrapAsync(changePasswordController)
+)
+
+/*
+ 
+
+*/
 export default userRouter

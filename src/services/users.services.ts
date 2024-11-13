@@ -343,6 +343,42 @@ class UsersServices {
     )
     return userInfor // cho controller gửi người dùng
   }
+
+  async changePassword({
+    user_id,
+    old_password,
+    password
+  }: {
+    user_id: string
+    old_password: string
+    password: string
+  }) {
+    //dùng user_id và old_password để tìm user => biết dc người dùng có thực sự
+    // sỡ hữu account k
+    const user = await databaseServices.users.findOne({
+      _id: new ObjectId(user_id),
+      password: hashPassword(old_password)
+    })
+    //nếu tìm k ra thì thk client k phải chủ acc
+    if (!user)
+      throw new ErrorWithStatus({
+        status: HTTP_STATUS.NOT_FOUND,
+        message: USERS_MESSAGES.USER_NOT_FOUND
+      })
+    //nếu mà có thì mình tiến thành cập nhật password mới
+
+    await databaseServices.users.updateOne(
+      { _id: new ObjectId(user_id) }, //
+      [
+        {
+          $set: {
+            password: hashPassword(password),
+            updated_at: '$$NOW'
+          }
+        }
+      ]
+    )
+  }
 }
 
 const usersServices = new UsersServices()

@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import {
+  ChangePasswordReqBody,
   loginReqBody,
   LogoutReqBody,
   RegisterReqBody,
@@ -248,5 +249,25 @@ export const updateMeController = async (
   res.status(HTTP_STATUS.OK).json({
     message: USERS_MESSAGES.UPDATE_PROFILE_SUCCESS,
     userInfor
+  })
+}
+
+export const changePasswordController = async (
+  req: Request<ParamsDictionary, any, ChangePasswordReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decode_authorization as TokenPayLoad
+  const { old_password, password } = req.body
+
+  await usersServices.changePassword({
+    user_id,
+    old_password,
+    password
+  })
+
+  // nếu đổi thành công thì
+  res.status(HTTP_STATUS.OK).json({
+    message: USERS_MESSAGES.CHANGE_PASSWORD_SUCCESS
   })
 }
