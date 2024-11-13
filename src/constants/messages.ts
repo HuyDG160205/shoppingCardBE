@@ -61,5 +61,6 @@ export const USERS_MESSAGES = {
   USERNAME_ALREADY_EXISTS: 'Username already exists',
   USERNAME_IS_INVALID:
     'Username must be a string and length must be 4 - 15, and contain only letters, numbers, and underscores, not only numbers',
-  CHANGE_PASSWORD_SUCCESS: 'Change password success'
+  CHANGE_PASSWORD_SUCCESS: 'Change password success',
+  REFRESH_TOKEN_SUCCESS: 'Refresh token successfully'
 } as const //để k ai chỉnh đc

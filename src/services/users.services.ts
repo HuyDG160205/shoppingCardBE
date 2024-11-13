@@ -379,6 +379,30 @@ class UsersServices {
       ]
     )
   }
+  async refreshToken({
+    user_id,
+    refresh_token
+  }: //
+  {
+    user_id: string
+    refresh_token: string
+  }) {
+    const [access_token, new_refresh_token] = await Promise.all([
+      this.signAccessToken(user_id),
+      this.signRefreshToken(user_id)
+    ])
+    //lưu rf mới vào database
+    await databaseServices.refresh_tokens.insertOne(
+      new RefreshToken({
+        token: new_refresh_token,
+        user_id: new ObjectId(user_id)
+      })
+    )
+    // xóa rf token cữ để k ai dùng nữa
+    await databaseServices.refresh_tokens.deleteOne({ token: refresh_token })
+    // gữi cặp mã mới cho người dùng
+    return { access_token, refresh_token: new_refresh_token }
+  }
 }
 
 const usersServices = new UsersServices()

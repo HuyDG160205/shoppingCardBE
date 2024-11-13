@@ -3,6 +3,7 @@ import {
   ChangePasswordReqBody,
   loginReqBody,
   LogoutReqBody,
+  RefreshTokenReqBody,
   RegisterReqBody,
   ResetPasswordReqBody,
   TokenPayLoad,
@@ -15,6 +16,7 @@ import { ErrorWithStatus } from '~/models/Errors'
 import HTTP_STATUS from '~/constants/httpStatus'
 import { USERS_MESSAGES } from '~/constants/messages'
 import { UserVerifyStatus } from '~/constants/enums'
+import { json } from 'stream/consumers'
 
 export const registercontroller = async (
   req: Request<ParamsDictionary, any, RegisterReqBody>,
@@ -269,5 +271,22 @@ export const changePasswordController = async (
   // nếu đổi thành công thì
   res.status(HTTP_STATUS.OK).json({
     message: USERS_MESSAGES.CHANGE_PASSWORD_SUCCESS
+  })
+}
+
+export const refreshTokenController = async (
+  req: Request<ParamsDictionary, any, RefreshTokenReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const { user_id } = req.decode_refresh_token as TokenPayLoad
+  const { refresh_token } = req.body
+  await usersServices.checkRefreshToken({ user_id, refresh_token })
+  //nếu kiểm tra refresh token còn hiểu lực thì tiến hành refreshtoken cho người dùng
+  const result = await usersServices.refreshToken({ user_id, refresh_token })
+  //trả cho người dùng
+  res.status(HTTP_STATUS.OK).json({
+    message: USERS_MESSAGES.REFRESH_TOKEN_SUCCESS,
+    result
   })
 }
