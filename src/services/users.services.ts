@@ -146,6 +146,7 @@ class UsersServices {
     const result = await databaseServices.users.insertOne(
       new User({
         _id: user_id,
+        username: `user${user_id.toString()}`,
         email_verify_token,
         ...payload,
         password: hashPassword(payload.password),
@@ -340,7 +341,7 @@ class UsersServices {
         }
       }
     )
-    return userInfor
+    return userInfor // cho controller gửi người dùng
   }
 }
 

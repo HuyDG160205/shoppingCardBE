@@ -11,6 +11,7 @@ import {
   verifyEmailTokenController,
   verifyForgotPasswordTokenController
 } from '~/controllers/users.controllers'
+import { filterMiddleware } from '~/middlewares/common.middlewares'
 import {
   accessTokenValidator,
   emailVerifyTokenValidator,
@@ -22,6 +23,7 @@ import {
   resetPasswordValidator,
   updateMeValidator
 } from '~/middlewares/users.middlewares'
+import { UpdateMeReqBody } from '~/models/requests/users.requests'
 import { wrapAsync } from '~/utils/handlers'
 
 //tạo userRoute
@@ -185,6 +187,17 @@ userRouter.post(
 
 userRouter.patch(
   '/me',
+  //cần 1 hàm sàn lọc req.body
+  filterMiddleware<UpdateMeReqBody>([
+    'name',
+    'date_of_birth',
+    'bio',
+    'location',
+    'website',
+    'avatar',
+    'username',
+    'cover_photo'
+  ]),
   accessTokenValidator,
   updateMeValidator, //
   wrapAsync(updateMeController)
