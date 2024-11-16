@@ -1,14 +1,58 @@
 import path from 'path'
 import fs from 'fs' //module chứa các method xử lý file
+import { UPLOAD_IMAGE_TEMP_DIR, UPLOAD_VIDEO_DIR } from '~/constants/dir'
+import { NextFunction, Request, Response } from 'express'
+import formidable, { File } from 'formidable'
 
 export const initFolder = () => {
-  //lưu đường dẫn đến thư mục sẽ lưu file
-  const uploadsFolderPath = path.resolve('uploads')
-  //truy vết đường link này xem có đến được thư mục nào ko ?
+  ;[UPLOAD_IMAGE_TEMP_DIR, UPLOAD_VIDEO_DIR].forEach((dir) => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, {
+        recursive: true // cho phép tạo lòng các thư mục
+      })
+    }
+  })
   //nếu mà tìm k được thì tạo mới thu mục
-  if (!fs.existsSync(uploadsFolderPath)) {
-    fs.mkdirSync(uploadsFolderPath, {
-      recursive: true // cho phép tạo lòng các thư mục
+}
+
+//tạo hàm handleuUploadSingleImage hàm nhận vào req
+// ép req phải đi qua tấm lưới lọc formidable
+// từ đó lấy được các file trong request , chỉ chọn ra các file là image
+// return các file đó ra ngoài
+
+export const handleuUploadSingleImage = async (req: Request) => {
+  // tạo lưới lọc từ formiadle
+  const form = formidable({
+    uploadDir: UPLOAD_IMAGE_TEMP_DIR,
+    maxFiles: 1, // tối đa 1 hình thôi
+    maxFileSize: 300 * 1024, // 300kb
+    keepExtensions: true, // gữi lãi đuôi của file
+    filter: ({ name, originalFilename, mimetype }) => {
+      //name: là field dc gửi thông qua form <input name="fileNe">
+      //originalFileName: tên gốc của file
+      //mimetype: kiểu định dạng file 'video/mp4' 'video/mkv' 'image/png' 'image/jpeg'
+      const valid = name === 'image' && Boolean(mimetype?.includes('image'))
+      if (!valid) {
+        form.emit('error' as any, new Error('File Type Invalid !!!') as any)
+      }
+
+      return valid
+    }
+  })
+  //có lưới rồi thì ep req vào
+  return new Promise<File>((resolve, reject) => {
+    form.parse(req, (err, fields, files) => {
+      if (err) return reject(err)
+      if (!files.image) return reject(new Error('Image is empty'))
+      return resolve(files.image[0])
     })
-  }
+  })
+}
+
+//viết hàm nhận vào fullFileName và chỉ lấy tên bỏ đuôi
+// anh1png
+export const getNameFromFileName = (fileName: string) => {
+  const nameArr = fileName.split('.')
+  nameArr.pop()
+  return nameArr.join('-')
 }
