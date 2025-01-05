@@ -5,6 +5,9 @@ import { getNameFromFileName, handleuUploadImage, handleuUploadVideo } from '~/u
 import fs from 'fs'
 import { Media } from '~/models/Other'
 import { mediaType } from '~/constants/enums'
+import { isProduction } from '~/constants/config'
+import dotenv from 'dotenv'
+dotenv.config()
 
 class MediasServices {
   async handleUploadImage(req: Request) {
@@ -19,7 +22,9 @@ class MediasServices {
         //setup đường link
         fs.unlinkSync(file.filepath) //xóa hình cũ
         const url: Media = {
-          url: `http://localhost:3000/static/image/${newFileName}`, //
+          url: isProduction
+            ? `${process.env.HOST}/static/image/${newFileName}`
+            : `http://localhost:${process.env.POST}/static/image/${newFileName}`, //
           type: mediaType.Image
         }
         return url
@@ -35,7 +40,9 @@ class MediasServices {
     const result = await Promise.all(
       files.map(async (file) => {
         const url: Media = {
-          url: `http://localhost:3000/static/video/${file.newFilename}`, //
+          url: isProduction
+            ? `${process.env.HOST}/static/video/${file.newFilename}`
+            : `http://localhost:${process.env.POST}/static/video/${file.newFilename}`, //
           type: mediaType.Video
         }
         return url

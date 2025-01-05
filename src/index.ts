@@ -10,16 +10,27 @@ import { defaultErrorHandler } from './middlewares/error.middlewares'
 import mediaRouter from './routes/medias.routers'
 import { initFolder } from './utils/file'
 import staticRouter from './routes/static.routers'
+import dotenv from 'dotenv'
+import brandRouter from './routes/brands.routers'
+
+dotenv.config()
 
 const app = express()
-const PORT = 3000
-databaseServices.connect().catch(console.dir) //kết nối với mongodb
+const PORT = process.env.PORT || 3000
+databaseServices
+  .connect()
+  .then(() => {
+    databaseServices.indexUsers()
+    databaseServices.indexRefreshTokens()
+  })
+  .catch(console.dir) //kết nối với mongodb
 initFolder()
 app.use(express.json()) //server dùng middleware biến đổi các chuỗi json được gửi lên trên
 // cho server kết nối userRouter
 app.use('/users', userRouter)
 app.use('/medias', mediaRouter)
 app.use('/static', staticRouter)
+app.use('/brands', brandRouter)
 // cho server mở port ở 3000
 app.use(defaultErrorHandler)
 app.listen(PORT, () => {

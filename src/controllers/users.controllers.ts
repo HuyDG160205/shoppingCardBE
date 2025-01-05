@@ -279,11 +279,11 @@ export const refreshTokenController = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { user_id } = req.decode_refresh_token as TokenPayLoad
+  const { user_id, exp } = req.decode_refresh_token as TokenPayLoad
   const { refresh_token } = req.body
   await usersServices.checkRefreshToken({ user_id, refresh_token })
   //nếu kiểm tra refresh token còn hiểu lực thì tiến hành refreshtoken cho người dùng
-  const result = await usersServices.refreshToken({ user_id, refresh_token })
+  const result = await usersServices.refreshToken({ user_id, refresh_token, exp })
   //trả cho người dùng
   res.status(HTTP_STATUS.OK).json({
     message: USERS_MESSAGES.REFRESH_TOKEN_SUCCESS,

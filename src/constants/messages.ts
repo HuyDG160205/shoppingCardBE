@@ -62,5 +62,27 @@ export const USERS_MESSAGES = {
   USERNAME_IS_INVALID:
     'Username must be a string and length must be 4 - 15, and contain only letters, numbers, and underscores, not only numbers',
   CHANGE_PASSWORD_SUCCESS: 'Change password success',
-  REFRESH_TOKEN_SUCCESS: 'Refresh token successfully'
+  REFRESH_TOKEN_SUCCESS: 'Refresh token successfully',
+  USER_IS_NOT_ADMIN: 'User is not admin'
 } as const //để k ai chỉnh đc
+
+export const BRANDS_MESSAGES = {
+  BRAND_NAME_IS_REQUIRED: 'Brand name is required',
+  BRAND_NAME_MUST_BE_A_STRING: 'Brand name must be a string',
+  CREATE_BRAND_SUCCESS: 'Create brand success',
+  BRAND_NAME_LENGTH_MUST_BE_FROM_1_TO_100: 'Brand name length must be from 1 to 100',
+  GET_BRANDS_SUCCESS: 'Get brands success',
+  GET_BRAND_SUCCESS: 'Get brand success',
+  UPDATE_BRAND_SUCCESS: 'Update brand success',
+  DELETE_BRAND_SUCCESS: 'Delete brand success',
+  HOTLINE_IS_REQUIRED: 'Hotline is required',
+  HOTLINE_MUST_BE_A_STRING: 'Hotline must be a string',
+  HOTLINE_LENGTH_MUST_BE_FROM_1_TO_12: 'Hotline length must  be from 1 to 12',
+  HOTLINE_IS_INVALID: 'Hotline is invalid',
+  ADDRESS_IS_REQUIRED: 'Address is required',
+  ADDRESS_MUST_BE_A_STRING: 'Address must be a string',
+  ADDRESS_LENGTH_MUST_BE_LESS_THAN_200: 'Address length must be less than 200',
+  BRAND_NOT_FOUND: 'Brand not found',
+  ID_IS_REQUIRED: 'Id is required',
+  ID_IS_INVALID: 'Id is invalid'
+} as const

@@ -2,7 +2,7 @@ import User from '~/models/schemas/User.schema'
 import databaseServices from './database.services'
 import { loginReqBody, RegisterReqBody, UpdateMeReqBody } from '~/models/requests/users.requests'
 import { hashPassword } from '~/utils/crypto'
-import { signToken } from '~/utils/jwt'
+import { signToken, verifyToken } from '~/utils/jwt'
 import { TOKEN_TYPE, UserVerifyStatus } from '~/constants/enums'
 import dotenv from 'dotenv'
 import { access } from 'fs'
@@ -23,12 +23,19 @@ class UsersServices {
     })
   }
 
-  private signRefreshToken(user_id: string) {
-    return signToken({
-      payload: { user_id, token_type: TOKEN_TYPE.RefreshToken },
-      privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string,
-      options: { expiresIn: process.env.REFRESH_TOKEN_EXPIRE_IN }
-    })
+  private signRefreshToken(user_id: string, exp?: number) {
+    if (exp) {
+      return signToken({
+        payload: { user_id, token_type: TOKEN_TYPE.RefreshToken, exp },
+        privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string
+      })
+    } else {
+      return signToken({
+        payload: { user_id, token_type: TOKEN_TYPE.RefreshToken },
+        privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string,
+        options: { expiresIn: process.env.REFRESH_TOKEN_EXPIRE_IN }
+      })
+    }
   }
 
   private signEmailVerifyToken(user_id: string) {
@@ -44,6 +51,13 @@ class UsersServices {
       payload: { user_id, token_type: TOKEN_TYPE.ForgotPasswordToken },
       privateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string,
       options: { expiresIn: process.env.FORGOT_PASSWORD_TOKEN_EXPIRE_IN }
+    })
+  }
+
+  private decodeRefreshToken(refresh_token: string) {
+    return verifyToken({
+      token: refresh_token,
+      privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string
     })
   }
 
@@ -160,6 +174,8 @@ class UsersServices {
       this.signRefreshToken(user_id.toString())
     ])
 
+    const { iat, exp } = await this.decodeRefreshToken(refresh_token)
+
     // gửi qua email
     //*nếu có aws thì thay cũng dc
     console.log(`
@@ -170,7 +186,7 @@ class UsersServices {
 
     //lưu lại refreshToken
     await databaseServices.refresh_tokens.insertOne(
-      new RefreshToken({ token: refresh_token, user_id: new ObjectId(user_id) })
+      new RefreshToken({ token: refresh_token, user_id: new ObjectId(user_id), iat, exp })
     )
 
     return {
@@ -199,9 +215,11 @@ class UsersServices {
       this.signAccessToken(user_id),
       this.signRefreshToken(user_id)
     ])
+    const { iat, exp } = await this.decodeRefreshToken(refresh_token)
+
     // lưu refreshToken lại
     await databaseServices.refresh_tokens.insertOne(
-      new RefreshToken({ token: refresh_token, user_id: new ObjectId(user_id) })
+      new RefreshToken({ token: refresh_token, user_id: new ObjectId(user_id), iat, exp })
     )
 
     return { access_token, refresh_token }
@@ -227,9 +245,11 @@ class UsersServices {
       this.signAccessToken(user_id),
       this.signRefreshToken(user_id)
     ])
+    const { iat, exp } = await this.decodeRefreshToken(refresh_token)
+
     // lưu refreshToken lại
     await databaseServices.refresh_tokens.insertOne(
-      new RefreshToken({ token: refresh_token, user_id: new ObjectId(user_id) })
+      new RefreshToken({ token: refresh_token, user_id: new ObjectId(user_id), iat, exp })
     )
 
     return { access_token, refresh_token }
@@ -379,23 +399,31 @@ class UsersServices {
       ]
     )
   }
+
   async refreshToken({
     user_id,
-    refresh_token
+    refresh_token,
+    exp
   }: //
   {
     user_id: string
     refresh_token: string
+    exp: number
   }) {
     const [access_token, new_refresh_token] = await Promise.all([
       this.signAccessToken(user_id),
-      this.signRefreshToken(user_id)
+      this.signRefreshToken(user_id, exp)
     ])
+
+    const { iat } = await this.decodeRefreshToken(refresh_token)
+
     //lưu rf mới vào database
     await databaseServices.refresh_tokens.insertOne(
       new RefreshToken({
         token: new_refresh_token,
-        user_id: new ObjectId(user_id)
+        user_id: new ObjectId(user_id),
+        iat,
+        exp
       })
     )
     // xóa rf token cữ để k ai dùng nữa
